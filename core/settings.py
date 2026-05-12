@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,14 +72,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-
+import os
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import dj_database_url
 DATABASES = {
 'default': dj_database_url.config(
-        default='postgresql://emon2002:bGu5EtoUmtGWDDOxXpGhhKTaSbZKkJdA@dpg-d80ddortqb8s7383gt0g-a.singapore-postgres.render.com/bus_locations'
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600
       )
 }
 
@@ -118,7 +120,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# ফাইল কম্প্রেস করার জন্য (ঐচ্ছিক কিন্তু ভালো)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

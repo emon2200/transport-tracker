@@ -17,6 +17,7 @@ python-decouple==3.8    # সিক্রেট কি বা ডাটাবে
 python-dotenv==1.1.0
 requests==2.32.3
 pytz==2024.2
+whitenoise==6.12.0
 
 # --- Forms & UI (Admin/Web) ---
 django-crispy-forms==2.3
