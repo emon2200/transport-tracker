@@ -23,21 +23,21 @@ class StationViewSet(viewsets.ModelViewSet):
     serializer_class = StationSerializer
 
 # ২. ESP32 থেকে ডাটা রিসিভ করার মূল এপিআই (Smart Logic)
+# tracker/views.py এর ভেতর পরিবর্তন করুন:
+
 class ReceiveGPSData(APIView):
     def post(self, request):
         imei = request.data.get('imei')
         try:
             device = Device.objects.get(imei=imei)
-            lat = request.data.get('lat')
-            lng = request.data.get('lng')
+            
+            # এই নামগুলো পরিবর্তন করুন (ESP32 থেকে পাঠানো নামের সাথে মিলিয়ে)
+            lat = request.data.get('latitude')   # আগে ছিল 'lat'
+            lng = request.data.get('longitude')  # আগে ছিল 'lng'
+            
             speed = request.data.get('speed', 0)
             voltage = request.data.get('battery_voltage', 12.0)
-            is_sos = request.data.get('sos', False)
-
-            # ১. ডিভাইসের স্ট্যাটাস আপডেট (Battery & Engine)
-            device.battery_voltage = voltage
-            device.is_engine_on = True if speed > 5 else False
-            device.save()
+            is_sos = request.data.get('is_emergency', False) # ESP32 এ পাঠিয়েছিলেন 'is_emergency'
 
             # ২. হিস্ট্রি লগ সেভ করা
             GPS_Logs.objects.create(
@@ -56,17 +56,7 @@ class ReceiveGPSData(APIView):
                 defaults={'lat': lat, 'long': lng, 'speed': speed, 'timestamp': timezone.now()}
             )
 
-            # ৪. SOS অ্যালার্ট ডিটেকশন
-            if is_sos:
-                Alerts.objects.create(
-                    asset=device.asset,
-                    type="SOS",
-                    value="Emergency Button Pressed!",
-                    is_emergency=True,
-                    latitude=lat,
-                    longitude=lng
-                )
-
+            # ... বাকি কোড আগের মতোই থাকবে ...
             return Response({"status": "Updated Successfully"}, status=status.HTTP_200_OK)
 
         except Device.DoesNotExist:
