@@ -32,7 +32,7 @@ router.register(r'geofences', GeofenceViewSet)
 router.register(r'asset-geofence-maps', AssetGeofenceMapViewSet)
 router.register(r'bus-routes', BusRouteViewSet)
 router.register(r'subscriptions', UserBusSubscriptionViewSet)
-
+router.register(r'device', DeviceViewSet)
 
 urlpatterns = [
     # অ্যাডমিন প্যানেল
