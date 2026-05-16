@@ -11,6 +11,11 @@ class DriverSerializer(serializers.ModelSerializer):
         model = Driver
         fields = '__all__'
 
+class DeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = '__all__'
+
 class AssetSerializer(serializers.ModelSerializer):
     # ড্রাইভারের নাম সরাসরি দেখার জন্য Nested Serializer
     current_driver_info = DriverSerializer(source='current_driver', read_only=True)

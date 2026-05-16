@@ -119,6 +119,10 @@ class BusRouteViewSet(viewsets.ModelViewSet):
     queryset = BusRoute.objects.all()
     serializer_class = BusRouteSerializer
 
+class DeviceViewSet(viewsets.ModelViewSet):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+
 # ৪. ইউজার বাস সাবস্ক্রিপশন (যাত্রীরা কোন বাসের আপডেট চায়)
 class UserBusSubscriptionViewSet(viewsets.ModelViewSet):
     queryset = UserBusSubscription.objects.all()
