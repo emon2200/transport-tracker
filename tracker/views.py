@@ -68,3 +68,65 @@ class LiveBusTracking(APIView):
         locations = Last_Known_Location.objects.all()
         serializer = LastLocationSerializer(locations, many=True)
         return Response(serializer.data)
+# ১. এক্টিভ ম্যাপিং (বাস এবং ডিভাইসের বর্তমান সংযোগ চেক করা)
+class ActiveMappingViewSet(viewsets.ModelViewSet):
+    queryset = Active_Mapping.objects.all()
+    
+    def list(self, request):
+        # কেবল একটিভ থাকা কানেকশনগুলো দেখাবে
+        active_list = self.queryset.filter(status='Active')
+        serializer = serializers.Serializer(active_list, many=True)
+        return Response(serializer.data)
+
+# ২. ডিভাইস সেটিংস লগ (হার্ডওয়্যার প্যারামিটার পরিবর্তন ট্র্যাক করা)
+class DeviceSettingsLogAPI(APIView):
+    def post(self, request):
+        # ESP32 যদি তার ইন্টারভ্যাল বা সেটিংস চেঞ্জ করে তবে এখানে লগ হবে
+        imei = request.data.get('imei')
+        parameter = request.data.get('parameter')
+        value = request.data.get('value')
+        
+        device = Device.objects.get(imei=imei)
+        log = Device_Settings_Log.objects.create(
+            device=device,
+            parameter=parameter,
+            value=value
+        )
+        return Response({"status": "Log recorded"}, status=status.HTTP_201_CREATED)
+
+# ৩. ট্রিপস এবং অ্যানালিটিক্স ভিউ
+class TripsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Trips.objects.all()
+    serializer_class = TripsSerializer
+    # এখানে কেবল নির্দিষ্ট বাসের ট্রিপ ফিল্টার করা যাবে
+    def get_queryset(self):
+        asset_id = self.request.query_params.get('asset_id')
+        if asset_id:
+            return self.queryset.filter(asset_id=asset_id)
+        return self.queryset
+# ১. জিওফেন্স ম্যানেজমেন্ট (অ্যাডমিন এরিয়া তৈরি বা ডিলিট করতে পারবে)
+class GeofenceViewSet(viewsets.ModelViewSet):
+    queryset = Geofence.objects.all()
+    serializer_class = GeofenceSerializer
+
+# ২. অ্যাসেট ও জিওফেন্স ম্যাপিং (কোন বাস কোন জোনে আছে তা দেখার জন্য)
+class AssetGeofenceMapViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Asset_Geofence_Map.objects.all()
+    serializer_class = AssetGeofenceMapSerializer
+
+# ৩. বাস রুট (বাসের নির্দিষ্ট রুট ম্যাপ বা স্টপেজ দেখার জন্য)
+class BusRouteViewSet(viewsets.ModelViewSet):
+    queryset = BusRoute.objects.all()
+    serializer_class = BusRouteSerializer
+
+# ৪. ইউজার বাস সাবস্ক্রিপশন (যাত্রীরা কোন বাসের আপডেট চায়)
+class UserBusSubscriptionViewSet(viewsets.ModelViewSet):
+    queryset = UserBusSubscription.objects.all()
+    serializer_class = UserBusSubscriptionSerializer
+    
+    # টিপস: এখানে ফিল্টার যোগ করা যায় যাতে একজন ইউজার শুধু নিজের সাবস্ক্রিপশন দেখে
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            return UserBusSubscription.objects.filter(user=user)
+        return UserBusSubscription.objects.none()

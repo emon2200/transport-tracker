@@ -25,6 +25,13 @@ router.register(r'companies', CompanyViewSet)
 router.register(r'assets', AssetViewSet)
 router.register(r'drivers', DriverViewSet)
 router.register(r'stations', StationViewSet)
+router.register(r'active-mappings', ActiveMappingViewSet, basename='active-mapping')
+router.register(r'trips', TripsViewSet, basename='trips')
+router.register(r'geofences', GeofenceViewSet, basename='geofences')
+router.register(r'geofences', GeofenceViewSet)
+router.register(r'asset-geofence-maps', AssetGeofenceMapViewSet)
+router.register(r'bus-routes', BusRouteViewSet)
+router.register(r'subscriptions', UserBusSubscriptionViewSet)
 
 
 urlpatterns = [
@@ -37,5 +44,6 @@ urlpatterns = [
     # স্পেশাল এপিআই (যেগুলো APIView দিয়ে তৈরি)
     path('api/gps-update/', ReceiveGPSData.as_view(), name='gps-update'),
     path('api/live-map/', LiveBusTracking.as_view(), name='live-map'),
+    path('api/device-settings-log/', DeviceSettingsLogAPI.as_view()),
    
 ]

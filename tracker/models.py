@@ -34,7 +34,8 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('system_admin', 'System Admin'), # পুরো সিস্টেমের মালিক
         ('company_admin', 'Company Admin'), # ভার্সিটির ভেন্ডর/অ্যাডমিন
-        ('user', 'User'), # সাধারণ ইউজার
+        ('user', 'User'),
+        ('driver','Driver') # সাধারণ ইউজার
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     phone_number = models.CharField(max_length=15, blank=True)
@@ -50,11 +51,7 @@ class Driver(models.Model):
     def __str__(self):
         return self.name
     
-class Roles(models.Model):
-    role_id = models.AutoField(primary_key=True) # Primary Key
-    role_name = models.CharField(max_length=50)
-    permissions = models.TextField()
-    company = models.ForeignKey(Company, on_delete=models.CASCADE) # Foreign Key
+
 
 # --- Asset & Configuration Section ---
 class Asset(models.Model):
@@ -114,6 +111,16 @@ class Device(models.Model):
     battery_voltage = models.FloatField(default=12.0) # বাসের ব্যাটারি ভোল্টেজ (১২.৬ হলে ফুল চার্জ)
     is_engine_on = models.BooleanField(default=False) # ভোল্টেজ ১৪ এর উপরে গেলে ইঞ্জিন অন বোঝা যায়
     last_online = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True) 
+    last_heartbeat = models.DateTimeField(null=True, blank=True) # সর্বশেষ কখন ডেটা পাঠিয়েছিল
+    
+    def get_status(self):
+        # যদি ৫ মিনিটের বেশি সময় ডেটা না আসে তবে অফলাইন দেখাবে
+        import datetime
+        from django.utils import timezone
+        if self.last_heartbeat and (timezone.now() - self.last_heartbeat).seconds > 60:
+            return "Disabled"
+        return "Active"
 
 class GPS_Logs(models.Model):
     log_id = models.BigAutoField(primary_key=True) # High-volume data
@@ -126,11 +133,21 @@ class GPS_Logs(models.Model):
     altitude = models.FloatField()
 
 class Last_Known_Location(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE, primary_key=True) # Primary Key is also Foreign Key
+    device = models.OneToOneField(Device, on_delete=models.CASCADE, primary_key=True)
     timestamp = models.DateTimeField()
     lat = models.DecimalField(max_digits=9, decimal_places=6)
     long = models.DecimalField(max_digits=9, decimal_places=6)
     speed = models.FloatField()
+    
+    # নতুন ফিল্ড: ব্যাকআপ ট্র্যাকিং চেনার জন্য
+    TRACKING_SOURCES = (
+        ('IOT', 'Hardware Device'),
+        ('MOB', 'Driver Mobile'),
+    )
+    source = models.CharField(max_length=3, choices=TRACKING_SOURCES, default='IOT')
+
+    def __str__(self):
+        return f"{self.device.imei} at {self.lat}, {self.long} via {self.get_source_display()}"
 
 class Device_Settings_Log(models.Model):
     log_id = models.BigAutoField(primary_key=True) # High-volume ডেটার জন্য BigAutoField
@@ -196,16 +213,30 @@ class UserBusSubscription(models.Model):
         return f"{self.user.username} -> {self.asset.name} ({self.status})"
 
 class Alerts(models.Model):
+    ALERT_TYPES = (
+        ('OS', 'Over Speed'),
+        ('SOS', 'Emergency / SOS Button'),
+        ('DD', 'Device Disabled / Offline'),
+        ('GF', 'Geofence Violation'),
+    )
+
     alert_id = models.AutoField(primary_key=True)
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE) # Foreign Key
-    type = models.CharField(max_length=50) # Geofence violation, Overspeeding etc.
-    timestamp = models.DateTimeField(auto_now_add=True)
-    value = models.CharField(max_length=100)
-    is_emergency = models.BooleanField(default=False) # SOS এর জন্য এটি True হবে
+    # Asset এবং Device দুটির সাথেই কানেকশন রাখা ভালো
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='alerts')
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='device_alerts')
     
-    # SOS এর সময় বাসটি কোথায় ছিল তা জানার জন্য
+    alert_type = models.CharField(max_length=3, choices=ALERT_TYPES)
+    value = models.CharField(max_length=100, help_text="গতি বা অন্য কোনো ভ্যালু")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    # ইমার্জেন্সি লোকেশন স্টোরেজ
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     
-    resolved = models.BooleanField(default=False) # অ্যাডমিন এটি চেক করলে True করে দেবে
+    # রেজোলিউশন স্ট্যাটাস
+    is_resolved = models.BooleanField(default=False) 
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.get_alert_type_display()} - {self.asset.reg_number}"
   

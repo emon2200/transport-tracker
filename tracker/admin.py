@@ -33,8 +33,9 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(Alerts)
 class AlertAdmin(admin.ModelAdmin):
-    list_display = ('asset', 'type', 'is_emergency', 'timestamp', 'resolved')
-    list_filter = ('is_emergency', 'resolved')
+    list_display = ('device', 'alert_type', 'is_resolved','resolved_at', 'timestamp','latitude','longitude',)
+    list_filter = ('alert_type', 'is_resolved')
+    search_fields = ('device__imei',)
 
 # বাকি মডেলগুলোকেও এভাবে রেজিস্টার করে দিন
 admin.site.register(Device)
