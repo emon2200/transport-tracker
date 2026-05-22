@@ -1,10 +1,28 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser,BaseUserManager
 import uuid
 import string
 import random
 
 
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'system_admin')
+
+        return self.create_user(email, password, **extra_fields)
+    
 def generate_unique_code():
     length = 6
     while True:
@@ -26,19 +44,33 @@ class Company(models.Model):
     def __str__(self):
         return self.name
 
+# কাস্টম ইউজার মডেল
 class User(AbstractUser):
-    user_id = models.AutoField(primary_key=True) # Primary Key
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='users', null=True,blank=True) # Foreign Key
-    # Note: PasswordHash এবং Email Django-র AbstractUser এ ডিফল্ট থাকে।
-    # System Admin যাতে রোল অনুযায়ী ইউজার ম্যানেজ করতে পারে
+    # username ফিল্ডটি পুরোপুরি ডিজেবল বা রিমুভ করা হলো
+    username = models.CharField(max_length=150, unique=False, null=True, blank=True)
+    
+    user_id = models.AutoField(primary_key=True)
+    email = models.EmailField(unique=True) # ইমেইল ইউনিক করা হলো
+    
+    company = models.ForeignKey('Company', on_delete=models.CASCADE, related_name='users', null=True, blank=True)
+    
     ROLE_CHOICES = [
-        ('system_admin', 'System Admin'), # পুরো সিস্টেমের মালিক
-        ('company_admin', 'Company Admin'), # ভার্সিটির ভেন্ডর/অ্যাডমিন
+        ('system_admin', 'System Admin'),
+        ('company_admin', 'Company Admin'),
         ('user', 'User'),
-        ('driver','Driver') # সাধারণ ইউজার
+        ('driver', 'Driver')
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     phone_number = models.CharField(max_length=15, blank=True)
+
+    # জ্যাঙ্গোকে বলা হচ্ছে এখন থেকে লগইনের জন্য email ব্যবহার করতে হবে
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = [] # সুপারইউজার বানানোর সময় ইমেইল ছাড়া আর কিছু বাধ্যতামুলক নয়
+
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return self.email
 
 class Driver(models.Model):
     driver_id = models.AutoField(primary_key=True)

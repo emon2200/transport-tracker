@@ -1,9 +1,12 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status,generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.utils import timezone
 from .models import *
 from .serializers import *
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # ১. জেনারেল ম্যানেজমেন্ট ভিউসেট (Admin/Manager এর জন্য)
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -134,3 +137,27 @@ class UserBusSubscriptionViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             return UserBusSubscription.objects.filter(user=user)
         return UserBusSubscription.objects.none()
+    
+
+
+# ১. কাস্টম লগইন ভিউ
+class CustomLoginView(TokenObtainPairView):
+    serializer_class = RoleBasedTokenObtainPairSerializer
+
+# ২. রেজিস্ট্রেশন ভিউ
+class RegisterView(generics.CreateAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
+# ৩. লগআউট ভিউ (টোকেন ব্ল্যাকলিস্ট করার জন্য)
+class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": "Invalid token or already logged out."}, status=status.HTTP_400_BAD_REQUEST)

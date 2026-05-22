@@ -94,3 +94,61 @@ class DeviceSettingsLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device_Settings_Log
         fields = '__all__'
+
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class RoleBasedTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = User.USERNAME_FIELD
+
+    # ফ্রন্টএন্ড (Flutter) থেকে রোল ইনপুট নেওয়ার জন্য ফিল্ড যোগ করা হলো
+    role = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        # ফ্লাটার থেকে পাঠানো রোলটি আলাদা করে রাখা হলো
+        input_role = attrs.get('role')
+        
+        # ১. প্রথমে ইমেইল এবং পাসওয়ার্ড ঠিক আছে কি না জ্যাঙ্গো চেক করবে
+        # পাসওয়ার্ড ভুল হলে এটি নিজে থেকেই Authentication Error দেবে
+        data = super().validate(attrs)
+        
+        # ২. পাসওয়ার্ড সঠিক হলে এবার ডাটাবেসের রোলের সাথে ইনপুট রোল ম্যাচ করানো হবে
+        db_role = self.user.role
+        
+        if db_role != input_role:
+            raise AuthenticationFailed({
+                "detail": f"আপনি এই ইমেইল দিয়ে '{input_role}' হিসেবে লগইন করতে পারবেন না। আপনার সঠিক রোল হলো '{db_role}'।"
+            })
+            
+        # ৩. ইমেইল, পাসওয়ার্ড এবং রোল—সব ম্যাচ করলে রেসপন্সে ডেটা পাঠানো হবে
+        data['user_id'] = self.user.user_id
+        data['email'] = self.user.email
+        data['role'] = self.user.role
+        data['company_id'] = self.user.company.id if self.user.company else None
+        
+        return data    
+
+# ২. রেজিস্ট্রেশন সিরিয়ালাইজার
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('email', 'password', 'role', 'phone_number', 'company')
+    def create(self, validated_data):
+        email = validated_data['email']
+        
+        # ইমেইলের ভেতরের ভ্যালুটাকেই আমরা জ্যাঙ্গোর ব্যাকগ্রাউন্ড username হিসেবে পাস করে দিচ্ছি
+        user = User.objects.create_user(
+            username=email,  # এই লাইনটি ডাটাবেসের NOT NULL এরর ফিক্স করবে
+            email=email,
+            password=validated_data['password'],
+            role=validated_data.get('role', 'user'),
+            phone_number=validated_data.get('phone_number', ''),
+            company=validated_data.get('company', None)
+        )
+        return user    

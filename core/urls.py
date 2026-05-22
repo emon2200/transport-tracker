@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from tracker.views import * # 'your_app_name' এর জায়গায় আপনার অ্যাপের নাম লিখুন
+from rest_framework_simplejwt.views import TokenRefreshView
 
 # ১. Router সেটআপ (যেগুলো ViewSet ব্যবহার করে তৈরি)
 router = DefaultRouter()
@@ -45,5 +46,9 @@ urlpatterns = [
     path('api/gps-update/', ReceiveGPSData.as_view(), name='gps-update'),
     path('api/live-map/', LiveBusTracking.as_view(), name='live-map'),
     path('api/device-settings-log/', DeviceSettingsLogAPI.as_view()),
+    path('api/auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('api/auth/login/', CustomLoginView.as_view(), name='auth_login'),
+    path('api/auth/logout/', LogoutView.as_view(), name='auth_logout'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
    
 ]
