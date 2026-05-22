@@ -90,7 +90,19 @@ DATABASES = {
         conn_max_age=600
       )
 }
+from datetime import timedelta
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    
+    # এই ২টি লাইন আপনার এররটি ১০০% ফিক্স করবে:
+    'USER_ID_FIELD': 'user_id',       # জ্যাঙ্গো মডেলের প্রাইমারি কি'র নাম
+    'USER_ID_CLAIM': 'user_id',       # টোকেনের ভেতরে যে নামে আইডি সেভ হবে
+    
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
