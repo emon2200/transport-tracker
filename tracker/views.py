@@ -148,35 +148,48 @@ class CustomLoginView(TokenObtainPairView):
 
 # ২. রেজিস্ট্রেশন ভিউ
 class RegisterView(APIView):
+
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
+
         if serializer.is_valid():
-            # ইউজার তৈরি হবে কিন্তু অ্যাকাউন্ট একটিভ হবে না (is_active=False)
+
+            # user create
             user = serializer.save()
             user.is_active = False
             user.save()
 
-            # ওটিপি জেনারেট করা
+            # generate otp
             otp_obj = EmailOTP.generate_otp(user.email)
 
-            # ইউজারের ইমেইলে ওটিপি পাঠানো
             try:
                 send_mail(
-                    subject='আপনার অ্যাকাউন্ট ভেরিফিকেশন ওটিপি (OTP)',
-                    message=f'আপনার ওটিপি কোডটি হলো: {otp_obj.otp}। এটি আগামী ৫ মিনিট সচল থাকবে।',
+                    subject='OTP Verification',
+                    message=f'Your OTP is: {otp_obj.otp}',
                     from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[user.email],
                     fail_silently=False,
                 )
-                return Response({
-                    "message": "রেজিস্ট্রেশন সফল হয়েছে! ওটিপি চেক করতে আপনার ইমেইল দেখুন।"
-                }, status=status.HTTP_201_CREATED)
+
             except Exception as e:
-                return Response({
-                    "error": "ইউজার তৈরি হয়েছে কিন্তু ইমেইল পাঠানো যায়নি।",
-                    "details": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
+
+                print("MAIL ERROR:", str(e))
+
+                return Response(
+                    {
+                        "message": "User created but email failed",
+                        "error": str(e)
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response(
+                {
+                    "message": "Registration successful. Check your email for OTP."
+                },
+                status=status.HTTP_201_CREATED
+            )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 # ২. ওটিপি ভেরিফাই করার ভিউ
 class VerifyOTPView(APIView):
