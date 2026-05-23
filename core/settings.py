@@ -85,10 +85,10 @@ import os
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import dj_database_url
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://emon2002:bGu5EtoUmtGWDDOxXpGhhKTaSbZKkJdA@dpg-d80ddortqb8s7383gt0g-a.singapore-postgres.render.com/bus_locations',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 from datetime import timedelta
 
