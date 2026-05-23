@@ -9,7 +9,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
-import threading
 
 # ১. জেনারেল ম্যানেজমেন্ট ভিউসেট (Admin/Manager এর জন্য)
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -147,24 +146,15 @@ class UserBusSubscriptionViewSet(viewsets.ModelViewSet):
 class CustomLoginView(TokenObtainPairView):
     serializer_class = RoleBasedTokenObtainPairSerializer
 
-def send_otp_email_background(subject, message, from_email, recipient_list):
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=from_email,
-            recipient_list=recipient_list,
-            fail_silently=True,  # ট্রু দিলে ইমেইল ফেইল করলেও মেইন রেসপন্স আটকে থাকবে না
-        )
-    except Exception as e:
-        print("BACKGROUND MAIL ERROR:", str(e))
-
+        
 # ২. রেজিস্ট্রেশন ভিউ
 class RegisterView(APIView):
+
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
+
             # user create
             user = serializer.save()
             user.is_active = False
@@ -173,19 +163,27 @@ class RegisterView(APIView):
             # generate otp
             otp_obj = EmailOTP.generate_otp(user.email)
 
-            # ২. মেইল পাঠানোর কাজটি Thread-এর মাধ্যমে ব্যাকগ্রাউন্ডে পাঠিয়ে দেওয়া হলো
-            email_thread = threading.Thread(
-                target=send_otp_email_background,
-                args=(
-                    'OTP Verification',
-                    f'Your OTP is: {otp_obj.otp}',
-                    settings.EMAIL_HOST_USER,
-                    [user.email]
+            try:
+                send_mail(
+                    subject='OTP Verification',
+                    message=f'Your OTP is: {otp_obj.otp}',
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[user.email],
+                    fail_silently=False,
                 )
-            )
-            email_thread.start()  # এটি ব্যাকগ্রাউন্ডে কাজ শুরু করবে, জ্যাঙ্গো পরের লাইনে চলে যাবে
 
-            # ৩. মেইল কানেকশনের জন্য অপেক্ষা না করে সাথে সাথে সাকসেস রেসপন্স পাঠানো
+            except Exception as e:
+
+                print("MAIL ERROR:", str(e))
+
+                return Response(
+                    {
+                        "message": "User created but email failed",
+                        "error": str(e)
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
             return Response(
                 {
                     "message": "Registration successful. Check your email for OTP."
@@ -194,7 +192,6 @@ class RegisterView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 # ২. ওটিপি ভেরিফাই করার ভিউ
 class VerifyOTPView(APIView):
     def post(self, request):
