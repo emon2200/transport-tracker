@@ -7,6 +7,8 @@ from .serializers import *
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import send_mail
+from django.conf import settings
 
 # ১. জেনারেল ম্যানেজমেন্ট ভিউসেট (Admin/Manager এর জন্য)
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -145,10 +147,71 @@ class CustomLoginView(TokenObtainPairView):
     serializer_class = RoleBasedTokenObtainPairSerializer
 
 # ২. রেজিস্ট্রেশন ভিউ
-class RegisterView(generics.CreateAPIView):
-    permission_classes = (AllowAny,)
-    serializer_class = RegisterSerializer
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            # ইউজার তৈরি হবে কিন্তু অ্যাকাউন্ট একটিভ হবে না (is_active=False)
+            user = serializer.save()
+            user.is_active = False
+            user.save()
 
+            # ওটিপি জেনারেট করা
+            otp_obj = EmailOTP.generate_otp(user.email)
+
+            # ইউজারের ইমেইলে ওটিপি পাঠানো
+            try:
+                send_mail(
+                    subject='আপনার অ্যাকাউন্ট ভেরিফিকেশন ওটিপি (OTP)',
+                    message=f'আপনার ওটিপি কোডটি হলো: {otp_obj.otp}। এটি আগামী ৫ মিনিট সচল থাকবে।',
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                return Response({
+                    "message": "রেজিস্ট্রেশন সফল হয়েছে! ওটিপি চেক করতে আপনার ইমেইল দেখুন।"
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({
+                    "error": "ইউজার তৈরি হয়েছে কিন্তু ইমেইল পাঠানো যায়নি।",
+                    "details": str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# ২. ওটিপি ভেরিফাই করার ভিউ
+class VerifyOTPView(APIView):
+    def post(self, request):
+        # সিরিয়ালাইজারের মাধ্যমে ইনপুট ডেটা ভ্যালিডেশন করা হচ্ছে
+        serializer = VerifyOTPSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            otp_input = serializer.validated_data['otp']
+
+            try:
+                otp_record = EmailOTP.objects.get(email=email)
+                
+                # ওটিপি এবং ৫ মিনিটের মেয়াদ চেক
+                if otp_record.otp == otp_input and otp_record.is_valid():
+                    # ইউজার অ্যাকাউন্ট অ্যাক্টিভ করা
+                    user = User.objects.get(email=email)
+                    user.is_active = True
+                    user.save()
+                    
+                    # কাজ শেষে ওটিপি ডিলিট
+                    otp_record.delete() 
+                    
+                    return Response({"message": "Account successfully verified!"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Invalid OTP or OTP has expired."}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            except EmailOTP.DoesNotExist:
+                return Response({"error": "No OTP found for this email."}, status=status.HTTP_404_NOT_FOUND)
+            except User.DoesNotExist:
+                return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 # ৩. লগআউট ভিউ (টোকেন ব্ল্যাকলিস্ট করার জন্য)
 class LogoutView(APIView):
     permission_classes = (IsAuthenticated,)

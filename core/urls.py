@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/live-map/', LiveBusTracking.as_view(), name='live-map'),
     path('api/device-settings-log/', DeviceSettingsLogAPI.as_view()),
     path('api/auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('api/auth/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
     path('api/auth/login/', CustomLoginView.as_view(), name='auth_login'),
     path('api/auth/logout/', LogoutView.as_view(), name='auth_logout'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

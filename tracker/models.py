@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser,BaseUserManager
 import uuid
 import string
 import random
+from django.utils import timezone
+from datetime import timedelta
 
 
 
@@ -29,7 +31,23 @@ def generate_unique_code():
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
         if not Asset.objects.filter(join_code=code).exists():
             return code
-        
+class EmailOTP(models.Model):
+    email = models.EmailField(unique=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # ওটিপি ৫ মিনিট পর এক্সপায়ার হয়ে যাবে
+    def is_valid(self):
+        return timezone.now() < self.created_at + timedelta(minutes=5)
+
+    @staticmethod
+    def generate_otp(email):
+        # ৬ ডিজিটের একটি র্যান্ডম নাম্বার তৈরি
+        otp_code = str(random.randint(100000, 999999))
+        # আগের ওটিপি থাকলে তা ডিলিট করে নতুন ওটিপি সেভ করা
+        EmailOTP.objects.filter(email=email).delete()
+        return EmailOTP.objects.create(email=email, otp=otp_code)
+
 # --- User & Security Section ---
 class Company(models.Model):
     company_id = models.AutoField(primary_key=True) # Primary Key
