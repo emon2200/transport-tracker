@@ -127,7 +127,8 @@ EMAIL_PORT = 465
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'procyonemon@gmail.com'
-EMAIL_HOST_PASSWORD = 'spzb ltni rjsi tjjb' 
+EMAIL_HOST_PASSWORD = 'spzbltnirjsitjjb' 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
