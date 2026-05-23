@@ -31,6 +31,7 @@ def generate_unique_code():
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
         if not Asset.objects.filter(join_code=code).exists():
             return code
+        
 class EmailOTP(models.Model):
     email = models.EmailField(unique=True)
     otp = models.CharField(max_length=6)

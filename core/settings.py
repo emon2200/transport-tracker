@@ -85,10 +85,10 @@ import os
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import dj_database_url
 DATABASES = {
-'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
+    'default': dj_database_url.config(
+        default='postgresql://emon2002:bGu5EtoUmtGWDDOxXpGhhKTaSbZKkJdA@dpg-d80ddortqb8s7383gt0g-a.singapore-postgres.render.com/bus_locations',
         conn_max_age=600
-      )
+    )
 }
 from datetime import timedelta
 
@@ -126,7 +126,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'procyonemon@gmail.com'
-EMAIL_HOST_PASSWORD = 'ofyw otag zenz gmsy' 
+EMAIL_HOST_PASSWORD = 'spzb ltni rjsi tjjb' 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
