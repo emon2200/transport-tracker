@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-%6aqhk(g@@q=touh#g*rd3k1dto9+*34#r3kp(^+ngw&fwl8s8
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 AUTH_USER_MODEL = 'tracker.User'
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-f7927.up.railway.app',
+]
 # Application definition
 
 INSTALLED_APPS = [
