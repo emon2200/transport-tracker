@@ -11,7 +11,7 @@ PyJWT==2.10.1
 # --- Database (PostgreSQL for Render) ---
 psycopg2-binary==2.9.9
 dj-database-url==3.1.2
-
+mysqlclient==2.2.8
 # --- Environment & Utils ---
 python-decouple==3.8    # সিক্রেট কি বা ডাটাবেস ইউআরএল ম্যানেজ করার জন্য
 python-dotenv==1.1.0

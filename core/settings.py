@@ -26,10 +26,7 @@ SECRET_KEY = 'django-insecure-%6aqhk(g@@q=touh#g*rd3k1dto9+*34#r3kp(^+ngw&fwl8s8
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 AUTH_USER_MODEL = 'tracker.User'
-# ২. CSRF ভেরিফিকেশনের জন্য Railway-এর ইউআরএলটি ট্রাস্টেড লিস্টে যোগ করুন
-CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-f7927.up.railway.app', # আপনার রেলওয়ে ইউআরএল (কোনো শেষ স্ল্যাশ ছাড়া)
-]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -88,10 +85,10 @@ import os
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import dj_database_url
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='mysql://root:CbIRRtiLysjjoKHnTLBUjnHMETqEQpag@kodama.proxy.rlwy.net:36433/railway',
+        conn_max_age=600
+    )
 }
 from datetime import timedelta
 
