@@ -124,17 +124,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
 EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 
 EMAIL_HOST_USER = 'ac4d43001@smtp-brevo.com'
-EMAIL_HOST_PASSWORD = os.getenv("BREVO"),
+EMAIL_HOST_PASSWORD = os.getenv("BREVO")  # <--- শেষের কমাটি (,) মুছে দেওয়া হয়েছে
 
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# এখানে আপনার Brevo অ্যাকাউন্টের ভেরিফাইড আসল ইমেইলটি বসিয়ে দিন
+DEFAULT_FROM_EMAIL = 'procyonemon25@gmail.com' 
 
 EMAIL_TIMEOUT = 25
 # Internationalization
