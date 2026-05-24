@@ -124,13 +124,19 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+
+EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
+
+EMAIL_HOST_USER = 'ac4d43001@smtp-brevo.com'
+EMAIL_HOST_PASSWORD = 'xsmtpsib-948b9b3fe4b862b69b7051302879105ecf28366b93a79c1139797ed613a1b86e-1FcY1UrwiXvo0bQW'
+
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = 'procyonemon@gmail.com'
-EMAIL_HOST_PASSWORD = 'pedb qgbq rdfk zlke' 
+
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+EMAIL_TIMEOUT = 25
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
