@@ -76,14 +76,14 @@ class LiveBusTracking(APIView):
 # ১. এক্টিভ ম্যাপিং (বাস এবং ডিভাইসের বর্তমান সংযোগ চেক করা)
 class ActiveMappingViewSet(viewsets.ModelViewSet):
     queryset = Active_Mapping.objects.all()
-    
+    serializer_class = ActiveMappingSerializer
     def list(self, request):
         # কেবল একটিভ থাকা কানেকশনগুলো দেখাবে
         active_list = self.queryset.filter(status='Active')
-        serializer = serializers.Serializer(active_list, many=True)
+        serializer = self.serializer_class(active_list, many=True)
         return Response(serializer.data)
 
-# ২. ডিভাইস সেটিংস লগ (হার্ডওয়্যার প্যারামিটার পরিবর্তন ট্র্যাক করা)
+# ২. ডিভাইস সেটিংস লগ (হার্ডওয়্যার প্যারামিটার পরিবর্তন ট্র্যাক করা)
 class DeviceSettingsLogAPI(APIView):
     def post(self, request):
         # ESP32 যদি তার ইন্টারভ্যাল বা সেটিংস চেঞ্জ করে তবে এখানে লগ হবে
@@ -155,7 +155,7 @@ class RegisterView(APIView):
         if serializer.is_valid():
             # ১. ইউজার ক্রিয়েট এবং ইনঅ্যাক্টিভ করা
             user = serializer.save()
-            user.is_active = False
+            user.is_active = True
             user.save()
 
             # ২. ডাটাবেসে ওটিপি জেনারেট করে রাখা (কিন্তু ইমেইল পাঠানো হবে না)
