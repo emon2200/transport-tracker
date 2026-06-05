@@ -149,44 +149,24 @@ class CustomLoginView(TokenObtainPairView):
         
 # ২. রেজিস্ট্রেশন ভিউ
 class RegisterView(APIView):
-
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
-
-            # user create
+            # ১. ইউজার ক্রিয়েট এবং ইনঅ্যাক্টিভ করা
             user = serializer.save()
             user.is_active = False
             user.save()
 
-            # generate otp
+            # ২. ডাটাবেসে ওটিপি জেনারেট করে রাখা (কিন্তু ইমেইল পাঠানো হবে না)
             otp_obj = EmailOTP.generate_otp(user.email)
+            print(f"DEVELOPMENT OTP FOR {user.email} IS: {otp_obj.otp}") # কনসোলে ওটিপি প্রিন্ট হবে
 
-            try:
-                send_mail(
-                    subject='OTP Verification',
-                    message=f'Your OTP is: {otp_obj.otp}',
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[user.email],
-                    fail_silently=True,
-                )
-
-            except Exception as e:
-
-                print("MAIL ERROR:", str(e))
-
-                return Response(
-                    {
-                        "message": "User created but email failed",
-                        "error": str(e)
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
+            # ৩. সরাসরি সাকসেস রেসপন্স পাঠানো
             return Response(
                 {
-                    "message": "Registration successful. Check your email for OTP."
+                    "message": "Registration successful. OTP generated successfully.",
+                    "note": "Email sending is disabled. Please check backend console or database for OTP."
                 },
                 status=status.HTTP_201_CREATED
             )
