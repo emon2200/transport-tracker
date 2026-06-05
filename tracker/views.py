@@ -148,7 +148,7 @@ class CustomLoginView(TokenObtainPairView):
 
         
 # ২. রেজিস্ট্রেশন ভিউ
-class RegisterView(viewsets.ModelViewSet):
+class RegisterView(APIView):
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
