@@ -67,7 +67,8 @@ class Company(models.Model):
 class User(AbstractUser):
     # username ফিল্ডটি পুরোপুরি ডিজেবল বা রিমুভ করা হলো
     username = models.CharField(max_length=150, unique=False, null=True, blank=True)
-    
+    first_name= models.CharField(max_length=30, blank=False)
+    last_name= models.CharField(max_length=30, blank=False)
     user_id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True) # ইমেইল ইউনিক করা হলো
     

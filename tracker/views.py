@@ -169,7 +169,7 @@ class RegisterView(APIView):
                     message=f'Your OTP is: {otp_obj.otp}',
                     from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[user.email],
-                    fail_silently=False,
+                    fail_silently=True,
                 )
 
             except Exception as e:
