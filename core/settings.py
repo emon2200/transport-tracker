@@ -26,9 +26,7 @@ SECRET_KEY = 'django-insecure-%6aqhk(g@@q=touh#g*rd3k1dto9+*34#r3kp(^+ngw&fwl8s8
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 AUTH_USER_MODEL = 'tracker.User'
-CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-f7927.up.railway.app',
-]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -87,10 +85,10 @@ import os
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import dj_database_url
 DATABASES = {
-    'default': dj_database_url.config(
-        default='mysql://root:CbIRRtiLysjjoKHnTLBUjnHMETqEQpag@kodama.proxy.rlwy.net:36433/railway',
+'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=600
-    )
+      )
 }
 from datetime import timedelta
 
